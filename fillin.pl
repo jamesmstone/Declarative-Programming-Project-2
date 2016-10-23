@@ -74,11 +74,9 @@ samelength([_|L1], [_|L2]) :-
 % implementation.
 
 solve_puzzle(Puzzle, Words, SolvedPuzzle) :-
-	get_cells(Puzzle, CelledPuzzle),
-	get_slots(CelledPuzzle, Slots),
-	print(Words),
-	print(Slots),
-	SolvedPuzzle = Puzzle.
+	get_cells(Puzzle, SolvedPuzzle),
+	get_slots(SolvedPuzzle, Slots),
+  solve(Slots, Words).
 
 
 get_cells([], []).
@@ -130,3 +128,51 @@ get_slots_in_row([Cell|Cells], CurrentSlot, Slots) :-
     Cell \== '#',
     append(CurrentSlot, [Cell], RemainderSlots),
     get_slots_in_row(Cells, RemainderSlots, Slots).
+
+
+
+
+
+
+
+solve([], []).
+solve(Slots, Words) :-
+    get_next_best_slot(Slots, Words, BestSlot),
+    exclude(\=(BestSlot), Words, FitingWords),
+    member(Word, FitingWords),
+    BestSlot = Word,
+    exclude(==(Word), Words, RemainingWords),
+    exclude(==(BestSlot), Slots, RemainingSlots),
+    solve(RemainingSlots, RemainingWords).
+
+
+get_next_best_slot([Slot|Slots], Words, BestSlot) :-
+    get_words_fiting_slot(Slot, Words, Count),
+    get_next_best_slot(Slots, Words, Count, Slot, BestSlot).
+
+
+get_next_best_slot([], _, _, BestSlot, BestSlot).
+get_next_best_slot([Slot|Slots], Words, LowestFiting,
+    CurrentBestSlot, BestSlot) :-
+    get_words_fiting_slot(Slot, Words, Count),
+    (Count < LowestFiting ->
+				% new better slot
+	        NewCurrentBestSlot = Slot,
+	        LowestFiting1 = Count;
+				% continue
+				NewCurrentBestSlot = CurrentBestSlot,
+        LowestFiting1 = LowestFiting
+    ),
+    get_next_best_slot(Slots, Words, LowestFiting1,
+        NewCurrentBestSlot, BestSlot).
+
+get_words_fiting_slot(Slot, Words, Count) :-
+    get_words_fiting_slot(Slot, Words, 0, Count).
+
+get_words_fiting_slot(_, [], NumFitingAcc, NumFitingAcc).
+get_words_fiting_slot(Slot, [Word|Words], NumFitingAcc, Count) :-
+    (Slot \= Word ->
+        NewNumFitingAcc is NumFitingAcc;
+				NewNumFitingAcc is NumFitingAcc + 1
+    ),
+		get_words_fiting_slot(Slot, Words, NewNumFitingAcc, Count).
