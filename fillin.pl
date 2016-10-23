@@ -75,6 +75,9 @@ samelength([_|L1], [_|L2]) :-
 
 solve_puzzle(Puzzle, Words, SolvedPuzzle) :-
 	get_cells(Puzzle, CelledPuzzle),
+	get_slots(CelledPuzzle, Slots),
+	print(Words),
+	print(Slots),
 	SolvedPuzzle = Puzzle.
 
 
@@ -90,3 +93,40 @@ row_to_cells(Row, Result) :-
 
 get_cell('_', _).
 get_cell(Letter, Letter) :- Letter \= '_'.
+
+
+
+
+
+get_slots(Puzzle, Slots) :-
+    get_row_slots(Puzzle, RowSlots),
+    include(not_single_letter_word, RowSlots, FilteredRowSlots), % filter single letter word slots
+    transpose(Puzzle, TransposedPuzzle),
+    get_row_slots(TransposedPuzzle, ColumnSlots),
+    include(not_single_letter_word, ColumnSlots, FilteredColumnSlots), % filter single letter word slots
+    append(FilteredRowSlots, FilteredColumnSlots, Slots).
+
+not_single_letter_word(Word) :-
+    length(Word, NumLetters),
+    NumLetters > 1.
+
+get_row_slots([], []).
+get_row_slots([Row|Rows], Slots) :-
+    get_slots_in_row(Row, RowSlots),
+    append(RowSlots, RemainderSlots, Slots),
+    get_row_slots(Rows, RemainderSlots).
+
+get_slots_in_row(Row, Slots) :-
+    get_slots_in_row(Row, [], Slots).
+
+get_slots_in_row([], [], []).
+get_slots_in_row([], CurrentSlot, [CurrentSlot]) :-
+    CurrentSlot \= [].
+get_slots_in_row([Cell|Cells], CurrentSlot, Slots) :-
+    Cell == '#',
+    Slots = [CurrentSlot|RemainderSlots],
+    get_slots_in_row(Cells, [], RemainderSlots).
+get_slots_in_row([Cell|Cells], CurrentSlot, Slots) :-
+    Cell \== '#',
+    append(CurrentSlot, [Cell], RemainderSlots),
+    get_slots_in_row(Cells, RemainderSlots, Slots).
