@@ -1,7 +1,7 @@
 %  Author: James Stone 761353 ( + some supplied code !  for reading in and out the puzzles)
 
 :- ensure_loaded(library(clpfd)). % get the right version of transpose.
-
+% what should get run when compiled to an executible
 main(PuzzleFile, WordlistFile, SolutionFile) :-
 	read_file(PuzzleFile, Puzzle),
 	read_file(WordlistFile, Wordlist),
@@ -9,11 +9,12 @@ main(PuzzleFile, WordlistFile, SolutionFile) :-
 	solve_puzzle(Puzzle, Wordlist, Solved),
 	print_puzzle(SolutionFile, Solved).
 
+%reads Filename to Content
 read_file(Filename, Content) :-
 	open(Filename, read, Stream),
 	read_lines(Stream, Content),
 	close(Stream).
-
+%reads a file Stream to Content
 read_lines(Stream, Content) :-
 	read_line(Stream, Line, Last),
 	(   Last = true
@@ -24,7 +25,7 @@ read_lines(Stream, Content) :-
 	;  Content = [Line|Content1],
 	    read_lines(Stream, Content1)
 	).
-
+% Reads a line of text from Stream, also returns Last if it is the last line in file
 read_line(Stream, Line, Last) :-
 	get_char(Stream, Char),
 	(   Char = end_of_file
@@ -37,26 +38,30 @@ read_line(Stream, Line, Last) :-
 	    read_line(Stream, Line1, Last)
 	).
 
+% Prints a Puzzle to a SoultionFile
 print_puzzle(SolutionFile, Puzzle) :-
 	open(SolutionFile, write, Stream),
 	maplist(print_row(Stream), Puzzle),
 	close(Stream).
 
+% Prints a row to a file Stream
 print_row(Stream, Row) :-
 	maplist(put_puzzle_char(Stream), Row),
 	nl(Stream).
 
+% prints a character to a file Stream.
 put_puzzle_char(Stream, Char) :-
 	(   var(Char)
 	->  put_char(Stream, '_')
 	;   put_char(Stream, Char)
 	).
 
+% checks if a puzzle is valid
 valid_puzzle([]).
 valid_puzzle([Row|Rows]) :-
 	maplist(samelength(Row), Rows).
 
-
+% checks if two lists are of the samelength
 samelength([], []).
 samelength([_|L1], [_|L2]) :-
 	same_length(L1, L2).
