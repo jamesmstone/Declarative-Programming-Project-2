@@ -1,6 +1,6 @@
-% You can use this code to get started with your fillin puzzle solver.
+%  Author: James Stone 761353 ( + some supplied code !  for reading in and out the puzzles)
 
-:- ensure_loaded(library(clpfd)).
+:- ensure_loaded(library(clpfd)). % get the right version of transpose.
 
 main(PuzzleFile, WordlistFile, SolutionFile) :-
 	read_file(PuzzleFile, Puzzle),
@@ -62,16 +62,16 @@ samelength([_|L1], [_|L2]) :-
 	same_length(L1, L2).
 
 
-% solve_puzzle(Puzzle0, WordList, Puzzle)
-% should hold when Puzzle is a solved version of Puzzle0, with the
-% empty slots filled in with words from WordList.  Puzzle0 and Puzzle
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% solve_puzzle(Puzzle, Words, SolvedPuzzle)
+% should hold when SolvedPuzzle is a solved version of Puzzle, with the
+% empty slots filled in with words from WordList.  Puzzle and SolvedPuzzle
 % should be lists of lists of characters (single-character atoms), one
-% list per puzzle row.  WordList is also a list of lists of
+% list per puzzle row.  Words is also a list of lists of
 % characters, one list per word.
-%
-% This code is obviously wrong: it just gives back the unfilled puzzle
-% as result.  You'll need to replace this with a working
-% implementation.
+
 
 solve_puzzle(Puzzle, Words, SolvedPuzzle) :-
 	get_cells(Puzzle, SolvedPuzzle),
@@ -79,21 +79,30 @@ solve_puzzle(Puzzle, Words, SolvedPuzzle) :-
   solve(Slots, Words).
 
 
-get_cells([], []).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% get_cells(Rows, Result)
+% converts Rows to a modified version of Rows where each cell has been parsed using get_cell
+get_cells([], []). % overlysafe basecase
 get_cells(Rows, Result) :-
     maplist(row_to_cells, Rows, Result).
 
-
-row_to_cells([], []).
+% row_to_cells(Row, Result)
+% converts a row to a modified version of Row where each cell has been parsed using get_cell
+% a helper for get_cells
+row_to_cells([], []).  % overlysafe basecase
 row_to_cells(Row, Result) :-
     maplist(get_cell, Row, Result).
 
-
+% get_cell
+% parses a string of a cell to an Logical Variable if it isn't known.
+% otherwise keeps it as a string
 get_cell('_', _).
 get_cell(Letter, Letter) :- Letter \= '_'.
 
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 get_slots(Puzzle, Slots) :-
@@ -130,49 +139,51 @@ get_slots_in_row([Cell|Cells], CurrentSlot, Slots) :-
     get_slots_in_row(Cells, RemainderSlots, Slots).
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
-
-
-solve([], []).
+% solve(Slots, Words)
+% retruns true if slots is a solution for the words
+solve([], []). % basecase
 solve(Slots, Words) :-
-    get_next_best_slot(Slots, Words, BestSlot),
-    exclude(\=(BestSlot), Words, FitingWords),
-    member(Word, FitingWords),
-    BestSlot = Word,
-    exclude(==(Word), Words, RemainingWords),
-    exclude(==(BestSlot), Slots, RemainingSlots),
-    solve(RemainingSlots, RemainingWords).
+	% try the "best" solutions first
+  get_next_best_slot(Slots, Words, BestSlot),
+  exclude(\=(BestSlot), Words, FitingWords),
+  member(Word, FitingWords),
+  BestSlot = Word,
+  exclude(==(Word), Words, RemainingWords),
+  exclude(==(BestSlot), Slots, RemainingSlots),
+  solve(RemainingSlots, RemainingWords).
 
-
+%  gets the slot with the fewset number of fitting words
 get_next_best_slot([Slot|Slots], Words, BestSlot) :-
     get_words_fiting_slot(Slot, Words, Count),
     get_next_best_slot(Slots, Words, Count, Slot, BestSlot).
 
-
-get_next_best_slot([], _, _, BestSlot, BestSlot).
-get_next_best_slot([Slot|Slots], Words, LowestFiting,
-    CurrentBestSlot, BestSlot) :-
-    get_words_fiting_slot(Slot, Words, Count),
-    (Count < LowestFiting ->
+	% helper
+	get_next_best_slot([], _, _, BestSlot, BestSlot). % basecase
+	get_next_best_slot([Slot|Slots], Words, LowestFiting,
+	  CurrentBestSlot, BestSlot) :-
+	  get_words_fiting_slot(Slot, Words, Count),
+	  (Count < LowestFiting ->
 				% new better slot
 	        NewCurrentBestSlot = Slot,
 	        LowestFiting1 = Count;
 				% continue
 				NewCurrentBestSlot = CurrentBestSlot,
-        LowestFiting1 = LowestFiting
-    ),
-    get_next_best_slot(Slots, Words, LowestFiting1,
-        NewCurrentBestSlot, BestSlot).
+	      LowestFiting1 = LowestFiting
+	  ),
+	  get_next_best_slot(Slots, Words, LowestFiting1, NewCurrentBestSlot, BestSlot).
 
-get_words_fiting_slot(Slot, Words, Count) :-
-    get_words_fiting_slot(Slot, Words, 0, Count).
+% gets list of words that fit in a slot (Words),
+% Also returns number of words that fit (TotalFitting) rather than having to recalc using length or similar
+get_words_fiting_slot(Slot, Words, TotalFitting) :-
+  get_words_fiting_slot(Slot, Words, 0, TotalFitting).
 
-get_words_fiting_slot(_, [], NumFitingAcc, NumFitingAcc).
-get_words_fiting_slot(Slot, [Word|Words], NumFitingAcc, Count) :-
-    (Slot \= Word ->
-        NewNumFitingAcc is NumFitingAcc;
+	% helper
+	get_words_fiting_slot(_, [], NumFitingAcc, NumFitingAcc).
+	get_words_fiting_slot(Slot, [Word|Words], NumFitingAcc, Count) :-
+	  (Slot \= Word ->
+	      NewNumFitingAcc is NumFitingAcc;
 				NewNumFitingAcc is NumFitingAcc + 1
-    ),
+	  ),
 		get_words_fiting_slot(Slot, Words, NewNumFitingAcc, Count).
