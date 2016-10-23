@@ -1,5 +1,7 @@
 % You can use this code to get started with your fillin puzzle solver.
 
+:- ensure_loaded(library(clpfd)).
+
 main(PuzzleFile, WordlistFile, SolutionFile) :-
 	read_file(PuzzleFile, Puzzle),
 	read_file(WordlistFile, Wordlist),
@@ -31,7 +33,7 @@ read_line(Stream, Line, Last) :-
 	; Char = '\n'
 	->  Line = [],
 	    Last = false
-	;   Line = [Char|Line1],
+	;   Line = [[Char]|Line1],
 	    read_line(Stream, Line1, Last)
 	).
 
@@ -71,4 +73,22 @@ samelength([_|L1], [_|L2]) :-
 % as result.  You'll need to replace this with a working
 % implementation.
 
-solve_puzzle(Puzzle, _, Puzzle).
+solve_puzzle(Puzzle, Words, SolvedPuzzle) :-
+	valid_puzzle(Puzzle),
+	print(Puzzle),
+	get_cells(Puzzle, CelledPuzzle),
+	print(CelledPuzzle),
+	print(Words),
+	SolvedPuzzle = Puzzle.
+
+% get_slots(Rows,Result) :- maplist(getslot ,Rows,Result). % todo
+get_cells(Rows,Result) :- maplist(maplist(get_cell),Rows,Result).
+
+get_cell(Letter, Output):-
+	(   Letter =:= "#" ->
+		% Output = slot("#") % todo
+			Output = solid
+	;   Letter =:= "_" ->
+			Output = slot(_)
+	;		Output = slot(Letter)
+	).
