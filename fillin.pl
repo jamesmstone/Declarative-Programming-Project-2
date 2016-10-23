@@ -33,7 +33,7 @@ read_line(Stream, Line, Last) :-
 	; Char = '\n'
 	->  Line = [],
 	    Last = false
-	;   Line = [[Char]|Line1],
+	;   Line = [Char|Line1],
 	    read_line(Stream, Line1, Last)
 	).
 
@@ -74,21 +74,19 @@ samelength([_|L1], [_|L2]) :-
 % implementation.
 
 solve_puzzle(Puzzle, Words, SolvedPuzzle) :-
-	valid_puzzle(Puzzle),
-	print(Puzzle),
 	get_cells(Puzzle, CelledPuzzle),
-	print(CelledPuzzle),
-	print(Words),
 	SolvedPuzzle = Puzzle.
 
-% get_slots(Rows,Result) :- maplist(getslot ,Rows,Result). % todo
-get_cells(Rows,Result) :- maplist(maplist(get_cell),Rows,Result).
 
-get_cell(Letter, Output):-
-	(   Letter =:= "#" ->
-		% Output = slot("#") % todo
-			Output = solid
-	;   Letter =:= "_" ->
-			Output = slot(_)
-	;		Output = slot(Letter)
-	).
+get_cells([], []).
+get_cells(Rows, Result) :-
+    maplist(row_to_cells, Rows, Result).
+
+
+row_to_cells([], []).
+row_to_cells(Row, Result) :-
+    maplist(get_cell, Row, Result).
+
+
+get_cell('_', _).
+get_cell(Letter, Letter) :- Letter \= '_'.
